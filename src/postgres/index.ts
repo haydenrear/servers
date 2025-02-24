@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { z } from "zod";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
   CallToolRequestSchema,
@@ -42,6 +43,7 @@ const pool = new pg.Pool({
 const SCHEMA_PATH = "schema";
 
 server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  // console.log("Received request.")
   const client = await pool.connect();
   try {
     const result = await client.query(
@@ -60,6 +62,8 @@ server.setRequestHandler(ListResourcesRequestSchema, async () => {
 });
 
 server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+
+  // console.log("Received request", request, ".")
   const resourceUrl = new URL(request.params.uri);
 
   const pathComponents = resourceUrl.pathname.split("/");
@@ -92,6 +96,7 @@ server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
 });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
+  // console.log("Received request")
   return {
     tools: [
       {
@@ -109,9 +114,9 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  // console.log("Received request", request, ".")
   if (request.params.name === "query") {
     const sql = request.params.arguments?.sql as string;
-
     const client = await pool.connect();
     try {
       await client.query("BEGIN TRANSACTION READ ONLY");
@@ -122,6 +127,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     } catch (error) {
       throw error;
+
     } finally {
       client
         .query("ROLLBACK")
@@ -136,8 +142,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 });
 
 async function runServer() {
+  // console.log("Starting server.")
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }
 
-runServer().catch(console.error);
+runServer()
+    .catch(console.error);
